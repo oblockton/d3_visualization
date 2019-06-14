@@ -28,9 +28,20 @@ var displayedYaxis = "poverty";
 function yScale(data, initYaxis) {
   // create scales
   var yLinearScale = d3.scaleLinear()
-    .domain([d3.min(data, d => d[displayedYaxis]), d3.max(data, d => d[displayedYaxis]) * 1.05 ])
+    .domain([d3.min(data, d => d[displayedYaxis]) * .95, d3.max(data, d => d[displayedYaxis]) * 1.05 ])
     .range([0,height]);
   return yLinearScale;
+};
+
+// function used for updating yAxis var upon click on axis label
+function renderAxes(newYScale, yAxis) {
+  var leftAxis = d3.axisLeft(newYScale);
+
+  xAxis.transition()
+    .duration(1000)
+    .call(bottomAxis);
+
+  return yAxis;
 };
 
 
@@ -60,24 +71,24 @@ d3.csv("assets/data/data.csv")
 
       // Step 6: Create Axes
       // =============================================
-      var xAxis_age = d3.axisBottom(xScale_age);
-      var yAxis = d3.axisLeft(yLinearScale);
+      var bttmAxis_age = d3.axisBottom(xScale_age);
+      var leftAxis = d3.axisLeft(yLinearScale);
 
 
       // Step 4: Append Axes to the chart
       // ==============================
 
-      chartGroup.append('g')
+      var xAxis = chartGroup.append('g')
       .attr('transform', `translate(0,${height})`)
-      .call(xAxis_age);
+      .call(bttmAxis_age);
 
 
-      chartGroup.append('g')
-      .call(yAxis);
+      var yAxis = chartGroup.append('g')
+      .call(leftAxis);
   //
       // Step 5: Create Circles
       // ==============================
-       chartGroup.selectAll('circle')
+       var circlesGroup = chartGroup.selectAll('circle')
        .data(data)
        .enter()
        .append('circle')
@@ -114,6 +125,51 @@ d3.csv("assets/data/data.csv")
        .attr('y',`${height + 40}`)
        .classed('axis-text', true)
        .text('age(In Personal Opinion)');
+
+       // x axis labels event listener
+       labelsGroup.selectAll("text")
+         .on("click", function() {
+           // get value of selection
+           var value = d3.select(this).attr("value");
+           if (value !== displayedYaxis) {
+
+             // replaces chosenXaxis with value
+             displayedYaxis = value;
+
+             // console.log(chosenXAxis)
+
+             // functions here found above csv import
+             // updates x scale for new data
+             yLinearScale = yScale(data, displayedYaxis);
+
+             // updates x axis with transition
+             yAxis = renderAxes(yLinearScale, yAxis);
+
+             // updates circles with new x values
+             circlesGroup = renderCircles(circlesGroup, yLinearScale, displayedYaxis);
+
+             // updates tooltips with new info
+             circlesGroup = updateToolTip(displayedYaxis, circlesGroup);
+
+             // changes classes to change bold text
+             if (displayedYaxis === "income") {
+               yInclabel
+                 .classed("active", true)
+                 .classed("inactive", false);
+               yPovlabel
+                 .classed("active", false)
+                 .classed("inactive", true);
+             }
+             else {
+               yInclabel
+                 .classed("active", false)
+                 .classed("inactive", true);
+               yPovlabel
+                 .classed("active", true)
+                 .classed("inactive", false);
+             }
+           }
+         });
 
 
 
