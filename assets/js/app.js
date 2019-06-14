@@ -21,7 +21,20 @@ var svg = d3.select("#scatter")
 var chartGroup = svg.append("g")
   .attr("transform", `translate(${margin.left}, ${margin.top})`);
 
-d3.csv("data.csv")
+// Set the inital axis data to display
+var displayedYaxis = "poverty";
+
+// function used for updating x-scale var upon click on axis label
+function yScale(data, initYaxis) {
+  // create scales
+  var yLinearScale = d3.scaleLinear()
+    .domain([d3.min(data, d => d[displayedYaxis]), d3.max(data, d => d[displayedYaxis]) * 1.05 ])
+    .range([0,height]);
+  return yLinearScale;
+};
+
+
+d3.csv("assets/data/data.csv")
   .then((data) => {
     // Parse Data
     data.forEach((entry) => {
@@ -41,19 +54,15 @@ d3.csv("data.csv")
       .domain(d3.extent(data, entry => entry.age))
       .range([0,width]);
 
-      var yScale_poverty = d3.scaleLinear()
-      .domain(d3.extent(data, entry => entry.poverty))
-      .range([0,height]);
+      var yLinearScale = yScale(data, displayedYaxis);
 
-      var ySCale_income = d3.scaleLinear()
-      .domain(d3.extent(data, entry => entry.income))
-      .range([0,height]);
+
 
       // Step 6: Create Axes
       // =============================================
       var xAxis_age = d3.axisBottom(xScale_age);
-      var yAxis_poverty = d3.axisLeft(yScale_poverty);
-      var yAxis_income = d3.axisLeft(ySCale_income);
+      var yAxis = d3.axisLeft(yLinearScale);
+
 
       // Step 4: Append Axes to the chart
       // ==============================
@@ -62,24 +71,52 @@ d3.csv("data.csv")
       .attr('transform', `translate(0,${height})`)
       .call(xAxis_age);
 
-      chartGroup.append('g')
-      .call(yAxis_poverty);
 
       chartGroup.append('g')
-      .call(yAxis_poverty);
-
+      .call(yAxis);
+  //
       // Step 5: Create Circles
       // ==============================
-       var circlesGroup =chartGroup.selectAll('circle')
-       .data(hairData)
+       chartGroup.selectAll('circle')
+       .data(data)
        .enter()
        .append('circle')
-       .attr('cx', d => xScale(d.hair_length))
-       .attr('cy', d => yScale(d.num_hits))
+       .attr('cx', d => xScale_age(d.age))
+       .attr('cy', d => yLinearScale(d.displayedYaxis))
        .attr('r','10')
        .attr('fill','red')
        .attr('stroke-width', '1')
        .attr('stroke','black');
+
+       // Create group for  multiple y- axis labels
+       var labelsGroup = chartGroup.append("g");
+
+
+       var yPovlabel = labelsGroup.append('text')
+       .attr("transform", "rotate(-90)")
+       .attr("y", -60)
+       .attr("x", 0 - (height/2))
+       .attr("value", "poverty") // value to grab for event listener
+       .classed("active", true)
+       .text("In Poverty(%)");
+
+       var yInclabel = labelsGroup.append('text')
+       .attr("transform", "rotate(-90)")
+       .attr("y", -80)
+       .attr("x", 0- (height/2))
+       // .attr("dy", "1em")
+       .attr("value", "income") // value to grab for event listener
+       .classed("inactive", true)
+       .text("Income(Baller Units)");
+
+       chartGroup.append('text')
+       .attr('x', `${width/2}`)
+       .attr('y',`${height + 40}`)
+       .classed('axis-text', true)
+       .text('age(In Personal Opinion)');
+
+
+
 
 
     })// End data.foreach(entry){}
