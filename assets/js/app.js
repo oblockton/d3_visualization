@@ -52,6 +52,13 @@ function renderCircles(circlesGroup, newYScale, displayedYaxis) {
   return circlesGroup;
 };
 
+function renderStatelabels(stateLabels, newYScale, displayedYaxis) {
+  stateLabels.transition()
+    .duration(1000)
+    .attr('y', d => newYScale(d[displayedYaxis]));
+  return stateLabels;
+}
+
 // function used for updating circles group with new tooltip
 function updateToolTip(displayedYaxis, circlesGroup) {
 
@@ -126,7 +133,10 @@ d3.csv("assets/data/data.csv")
 
     var yAxis = chartGroup.append('g')
     .call(leftAxis);
-//
+
+      //add state labels to nodes
+
+
     // Step 5: Create Circles
     // ==============================
      var circlesGroup = chartGroup.selectAll('circle')
@@ -140,6 +150,19 @@ d3.csv("assets/data/data.csv")
      .attr('stroke-width', '1')
      .attr('stroke','black')
      .attr('opacity', '.5');
+
+     var circleText = chartGroup.selectAll(null)
+       .data(data)
+       .enter()
+       .append('text')
+
+     var stateLabels = circleText
+       .attr('x', d => xScale_age(d.age))
+       .attr('y', d => (yLinearScale(d[displayedYaxis])))
+       .style('text-anchor', 'middle')
+       .style('font-size', '9px')
+       .style('font-weight', 'bold')
+       .text(d => d.abbr)
 
      // Create group for  multiple y- axis labels
      var labelsGroup = chartGroup.append("g");
@@ -169,7 +192,7 @@ d3.csv("assets/data/data.csv")
      .attr('x', `${width/2}`)
      .attr('y',`${height + 40}`)
      .classed('axis-text', true)
-     .text('age(In Personal Opinion)');
+     .text('age(Years)');
 
      // updateToolTip function above csv import
      var circlesGroup = updateToolTip(displayedYaxis, circlesGroup);
@@ -198,6 +221,7 @@ d3.csv("assets/data/data.csv")
 
            // updates circles with new y values
            circlesGroup = renderCircles(circlesGroup, yLinearScale, displayedYaxis);
+           stateLabels = renderStatelabels(stateLabels, yLinearScale, displayedYaxis);
 
            // updates tooltips with new info
            circlesGroup = updateToolTip(displayedYaxis, circlesGroup);
