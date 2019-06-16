@@ -37,3 +37,7 @@ body {
   fill: #551aaf;
   text-anchor: middle;
 }
+
+#header {
+  background-color: lightblue;
+}
